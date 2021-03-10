@@ -102,14 +102,14 @@ class GoogleCacheSiteRecover
      *
      * @var Integer
      */
-    protected $wait_min = 65;
+    protected $wait_min = 15;
 
     /**
      * Maximum time, in seconds, to take page from google cache
      *
      * @var Integer
      */
-    protected $wait_max = 90;
+    protected $wait_max = 29;
     protected $proxy_file = 'proxy.txt';
     protected $proxy_enabled = false;
     protected $proxy_list = 'proxy.txt';
