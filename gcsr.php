@@ -216,23 +216,23 @@ class GoogleCacheSiteRecover
                             $this->saveFile($content, $save_on);
                             echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO executePageAssets: 200 OK ' . $url . ', Sleep ' . $this->wait_myhost . PHP_EOL2;
                             if ($this->debug_level) {
-                                file_put_contents(getcwd() . '/gcsr_asset_ok.txt', $url . PHP_EOL2, FILE_APPEND);
+                                file_put_contents(getcwd() . '/gcsr_asset_ok.txt', $url . PHP_EOL, FILE_APPEND);
                             }
                             break;
                         case 404:
                             echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO executePageAssets: 404 not found ' . $url . ', Sleep ' . $this->wait_myhost . PHP_EOL2;
                             if ($this->debug_level) {
-                                file_put_contents(getcwd() . '/gcsr_asset_404.txt', $url . PHP_EOL2, FILE_APPEND);
+                                file_put_contents(getcwd() . '/gcsr_asset_404.txt', $url . PHP_EOL, FILE_APPEND);
                             }
                             break;
                         default:
                             echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO executePageAssets: error ' . $this->cph->status_code . ' ' . $url . ', Sleep ' . $this->wait_myhost . PHP_EOL2;
                             if ($this->debug_level) {
-                                file_put_contents(getcwd() . '/gcsr_asset_error.txt', $url . PHP_EOL2, FILE_APPEND);
+                                file_put_contents(getcwd() . '/gcsr_asset_error.txt', $url . PHP_EOL, FILE_APPEND);
                             }
                             break;
                     }
-                    file_put_contents(getcwd() . '/gcsr_asset_ignored.txt', $asset . PHP_EOL2, FILE_APPEND);
+                    file_put_contents(getcwd() . '/gcsr_asset_ignored.txt', $asset . PHP_EOL, FILE_APPEND);
                     if ($this->wait_myhost) {
                         sleep($this->wait_myhost);
                     }
@@ -263,7 +263,7 @@ class GoogleCacheSiteRecover
             }
 
             if ($this->debug_level) {
-                file_put_contents(getcwd() . '/' . $this->info_file_processed, $url . PHP_EOL2, FILE_APPEND);
+                file_put_contents(getcwd() . '/' . $this->info_file_processed, $url . PHP_EOL, FILE_APPEND);
             }
             $this->request_count += 1;
             if ($this->request_count > 2) {
@@ -375,18 +375,18 @@ class GoogleCacheSiteRecover
                 }
 
                 if ($this->debug_level) {
-                    file_put_contents(getcwd() . '/' . $this->info_file_doneok, $url . PHP_EOL2, FILE_APPEND);
+                    file_put_contents(getcwd() . '/' . $this->info_file_doneok, $url . PHP_EOL, FILE_APPEND);
                 }
                 return true;
             case 404:
             case 400:
                 if ($this->debug_level) {
-                    file_put_contents(getcwd() . '/' . $this->info_file_done404, $url . PHP_EOL2, FILE_APPEND);
+                    file_put_contents(getcwd() . '/' . $this->info_file_done404, $url . PHP_EOL, FILE_APPEND);
                 }
                 return null;
             default:
                 if ($this->debug_level) {
-                    file_put_contents(getcwd() . '/' . $this->info_file_error, $url . PHP_EOL2, FILE_APPEND);
+                    file_put_contents(getcwd() . '/' . $this->info_file_error, $url . PHP_EOL, FILE_APPEND);
                 }
                 return false;
         }
