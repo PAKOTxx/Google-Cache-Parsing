@@ -735,8 +735,6 @@ echo '<html>';
 echo '<head>';
 echo '</head>';
 echo '<body>';
-echo '123';
-echo '<br>';
 // if (empty($argv) || count($argv) < 2) {
 //     echo 'Usage: gcsr.php http://site.com' . PHP_EOL2;
 //     echo '       1º param: site url (no / at the end)' . PHP_EOL2;
