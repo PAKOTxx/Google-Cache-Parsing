@@ -14,19 +14,38 @@ function gparse($host, $file)
             $url = substr($url, 0, -1);
         }
         if (preg_match('/(.*)-3[0-9]+$/Uis', $url)) {
+            start:
             $art_id = substr($url, -7);
             if ($art_id > 3877812) {
                 $save_on = getSavePath($url);
                 if (!is_file($save_on)) {
                     $content = get_page_content($host, $url);
                     if ($content) {
-                        if (prepareFilePath($save_on)) {
-                            if (!file_put_contents($save_on, $content)) {
-                                $error = gmdate("Y-m-d\TH:i:s\Z") . ' error on file put contents';
+                        if ($content == 302) {
+                            $error = gmdate("Y-m-d\TH:i:s\Z") . ' need to change proxy';
+                            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
+                            $GLOBALS['proxy_list_index']++;
+                            if ($GLOBALS['proxy_list_index'] == count($GLOBALS['proxy_list_array'])) {
+                                $error = gmdate("Y-m-d\TH:i:s\Z") . ' all proxy banned for today, sleeping';
                                 error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
+                                sleep(3600);
+                                $GLOBALS['proxy_list_index'] = 0;
+                                goto start;
                             } else {
-                                $error = gmdate("Y-m-d\TH:i:s\Z") . '  --  ' . $GLOBALS['proxy_list_array'][$GLOBALS['proxy_list_index']] . '  --  ' . $url . ' is done';
-                                error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/working.log');
+                                goto start;
+                            }
+                        } else if ($content == 404) {
+                            $error = gmdate("Y-m-d\TH:i:s\Z") . $url . ' no such article in cache';
+                            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
+                        } else {
+                            if (prepareFilePath($save_on)) {
+                                if (!file_put_contents($save_on, $content)) {
+                                    $error = gmdate("Y-m-d\TH:i:s\Z") . ' error on file put contents';
+                                    error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
+                                } else {
+                                    $error = gmdate("Y-m-d\TH:i:s\Z") . '  --  ' . $GLOBALS['proxy_list_array'][$GLOBALS['proxy_list_index']] . '  --  ' . $url . ' is done';
+                                    error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/working.log');
+                                }
                             }
                         }
                     }
@@ -91,19 +110,9 @@ function get_page_content($host, $url)
     $content = curl_exec($ch);
     $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if ($status_code == 302) {
-        $error = gmdate("Y-m-d\TH:i:s\Z") . ' need to change proxy';
-        error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
-        $GLOBALS['proxy_list_index']++;
-        if ($GLOBALS['proxy_list_index'] == count($GLOBALS['proxy_list_array'])) {
-            $error = gmdate("Y-m-d\TH:i:s\Z") . ' all proxy banned for today';
-            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
-            die;
-        } else {
-            get_page_content($host, $url);
-        }
+        return $status_code;
     } else if ($status_code == 404) {
-        $error = gmdate("Y-m-d\TH:i:s\Z") . $fullurl . ' no such article in cache';
-        error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
+        return $status_code;
     } else {
         return $content;
     }
