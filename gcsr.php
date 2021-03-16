@@ -19,7 +19,7 @@ class GoogleCacheSiteRecover
      *
      * @var String
      */
-    protected $base_cache = 'http://webcache.googleusercontent.com/search?q=cache:';
+    protected $base_cache = 'https://webcache.googleusercontent.com/search?q=cache:';
     protected $base_site = '';
     protected $debug_level = 1;
 
@@ -30,18 +30,10 @@ class GoogleCacheSiteRecover
     protected $cph;
 
     /**
-     * Maximum consecutive tentatives to ask google cache for page
-     *
-     * @var Integer
-     */
-    protected $error_count_max = 5;
-
-    /**
      * How many consecutive server errors we have now?
      *
      * @var Integer
      */
-    protected $error_count_now = 0;
     protected $save_path = '';
     protected $force_html_sufix = true;
     protected $google_cache_sufix = '&hl=pt-BR&ct=clnk&gl=br&client=ubuntu';
@@ -88,7 +80,7 @@ class GoogleCacheSiteRecover
      *
      * @var Integer
      */
-    protected $wait_error = 307;
+    protected $wait_error = 5;
 
     /**
      * Not implemented
@@ -102,17 +94,14 @@ class GoogleCacheSiteRecover
      *
      * @var Integer
      */
-    protected $wait_min = 15;
+    protected $wait_min = 1;
 
     /**
      * Maximum time, in seconds, to take page from google cache
      *
      * @var Integer
      */
-    protected $wait_max = 29;
-    protected $proxy_file = 'proxy.txt';
-    protected $proxy_enabled = false;
-    protected $proxy_list = 'proxy.txt';
+    protected $wait_max = 2;
 
     /**
      * Initialize values
@@ -163,7 +152,7 @@ class GoogleCacheSiteRecover
         if (is_file($this->url_file)) {
             $input = file_get_contents($this->url_file);
             if ($input) {
-                $this->url_stack = array_filter(explode("\n", $input));
+                $this->url_stack = array_filter(array_map('trim', explode("\n", $input)));
                 if (empty($this->url_stack)) {
                     echo gmdate("Y-m-d\TH:i:s\Z") . ": \033[31mERROR\033[37m" . ' execute: url_file empty (' . $this->url_file . ')';
                     die;
@@ -173,19 +162,6 @@ class GoogleCacheSiteRecover
             echo gmdate("Y-m-d\TH:i:s\Z") . ": \033[31mERROR\033[37m" . ' execute: url_file not found! (' . $this->url_file . ')';
             die;
         }
-        if ($this->proxy_enabled) {
-            if (is_file($this->proxy_file)) {
-                $input = file_get_contents($this->url_file);
-                if ($input) {
-                    $this->proxy_list = array_filter(explode("\n", $input));
-                    if (empty($this->proxy_list)) {
-                        echo gmdate("Y-m-d\TH:i:s\Z") . ": \033[31mERROR\033[37m" . ' execute: proxy_list empty (' . $this->proxy_list . ')';
-                        die;
-                    }
-                }
-            }
-        }
-
         $this->executePageRequest();
     }
 
@@ -208,7 +184,6 @@ class GoogleCacheSiteRecover
                     $url = $this->base_site . $asset;
                     $save_on = $this->save_path . $asset;
                     $this->ignore[] = $asset;
-                    //var_dump($url, $save_on);
                     $content = $this->cph->getUrlContents($url);
                     switch ($this->cph->status_code) {
 
@@ -252,11 +227,10 @@ class GoogleCacheSiteRecover
         $reqs_per_hour = '---';
 
         $total = count($this->url_stack);
-        $total = 5;
         $ignored = 0;
 
         foreach ($this->url_stack as $url) {
-
+            start:
             if ($this->isUrlIgnore($url)) {
                 $ignored += 1;
                 echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO executeCacheRequest: ignoring ' . $url . PHP_EOL2;
@@ -282,24 +256,18 @@ class GoogleCacheSiteRecover
             $url_to_html_page = $this->google_cache_use ? $this->base_cache . $this->base_site . $url : $this->base_site . $url;
 
             $result = $this->getUrl($url_to_html_page, $this->getSavePath($url));
-            if ($result === false) {
-                $this->error_count_now += 1;
-                if ($this->error_count_now > $this->error_count_max) {
-                    echo gmdate("Y-m-d\TH:i:s\Z") . ": \033[31mCRITICAL\033[37m" . ' executeCacheRequest: Too many errors. Stoping now' . PHP_EOL2;
-                    die;
-                }
-                $sleep = $this->wait_error * $this->error_count_now;
-                echo gmdate("Y-m-d\TH:i:s\Z") . ': ALERT executeCacheRequest: ERROR 5XX or 3XX! ' . $sleep . 's' . PHP_EOL2;
+            if ($result == 404) {
+                continue;
+            } else if ($result === false) {
+                delete_proxy_from_array;
+                goto start;
             } else {
-
                 if ($this->enable_assets_request) {
                     $this->executePageAssets();
                 }
-
-
-                $sleep = rand($this->wait_min, $this->wait_max);
                 echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO executeCacheRequest: wait for ' . $sleep . 's' . PHP_EOL2;
             }
+            $sleep = rand($this->wait_min, $this->wait_max);
             sleep($sleep);
         }
         echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO executeCacheRequest: Google Cache Site Recover finished' . PHP_EOL2;
@@ -316,15 +284,6 @@ class GoogleCacheSiteRecover
     public function get($name)
     {
         return isset($this->$name) ? $this->$name : null;
-    }
-
-    protected function getProxy()
-    {
-        $proxy_now = $this->proxy_list[0];
-        echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO getProxy: ' . $proxy_now . PHP_EOL2;
-        //curl_setopt($curl_handler, CURLOPT_PROXY, $proxy_now);
-        //return $curl_handler;
-        return $proxy_now;
     }
 
     /**
@@ -384,7 +343,7 @@ class GoogleCacheSiteRecover
                 if ($this->debug_level) {
                     file_put_contents(getcwd() . '/' . $this->info_file_done404, $url . PHP_EOL, FILE_APPEND);
                 }
-                return null;
+                return 404;
             default:
                 if ($this->debug_level) {
                     file_put_contents(getcwd() . '/' . $this->info_file_error, $url . PHP_EOL, FILE_APPEND);
@@ -407,42 +366,6 @@ class GoogleCacheSiteRecover
         $content = $this->cph->getUrlContents($url);
         $this->status_code = $this->cph->status_code;
         return $content;
-    }
-
-    /**
-     * For a list of files, read then, convert to array, control caracters
-     * and then save then on a internal variable
-     *
-     * @param   String        $param
-     * @param   String|Array  $files
-     * @returns Array
-     */
-    public function importParam($param, $files)
-    {
-        $data = [];
-        if (!is_array($files)) {
-            if (strpos(',')) {
-                $files = array_map('trim', implode(',', $files));
-            } else {
-                $files = [$files];
-            }
-        }
-        foreach ($files as $file) {
-            $array = [];
-            if (is_file($file) && is_readable($file)) {
-                $string = file_get_contents($file);
-                $array = explode(PHP_EOL2, $string);
-                $data = array_merge($data, $array);
-            }
-        }
-        $data = array_unique(array_filter($data));
-        //var_dump(count($data));
-        if (count($data)) {
-            $this->$param = $data;
-        } else {
-            echo gmdate("Y-m-d\TH:i:s\Z") . ': WARNING importParam cannot import ' . json_encode($files);
-        }
-        return isset($this->$param) ? $this->$param : null;
     }
 
     /**
@@ -520,9 +443,9 @@ class GoogleCacheSiteRecover
 
 class CurlProxyHelper
 {
-
     protected $proxy_enabled = false;
     protected $proxy_list = [];
+    protected $proxy_file = 'proxy.txt';
     protected $debug_level = 1;
     protected $check_ssl = false;
     protected $url = '';
@@ -538,7 +461,19 @@ class CurlProxyHelper
     protected $user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/47.0.2526.73 Chrome/47.0.2526.73 Safari/537.36';
 
     public function __construct()
-    {;
+    {
+        if ($this->proxy_enabled) {
+            if (is_file($this->proxy_file)) {
+                $input = file_get_contents($this->proxy_file);
+                if ($input) {
+                    $this->proxy_list = array_filter(array_map('trim', explode("\n", $input)));
+                    if (empty($this->proxy_list)) {
+                        echo gmdate("Y-m-d\TH:i:s\Z") . ": \033[31mERROR\033[37m" . ' execute: proxy_list empty (' . $this->proxy_list . ')';
+                        die;
+                    }
+                }
+            }
+        }
     }
 
     protected function getUserAgent()
@@ -584,13 +519,11 @@ class CurlProxyHelper
         } else {
             $this->url = $url;
         }
-        //echo gmdate("Y-m-d\TH:i:s\Z") . ': getUrlContents ' . $url . PHP_EOL2;
 
         $ch = curl_init();
 
         if ($this->proxy_enabled) {
-            $proxy_now = $this->getProxy($ch);
-            curl_setopt($ch, CURLOPT_PROXY, $proxy_now);
+            curl_setopt($ch, CURLOPT_PROXY, $this->proxy_list[0]);
         }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -607,7 +540,6 @@ class CurlProxyHelper
             echo gmdate("Y-m-d\TH:i:s\Z") . ": \033[31mERROR\033[37m" . ' getUrlContents CURL_ERROR ' . curl_error($ch) . PHP_EOL2;
         }
 
-        //var_dump($content); die;
         //print_r(curl_getinfo($ch));
 
         curl_close($ch);
@@ -736,24 +668,6 @@ echo '<html>';
 echo '<head>';
 echo '</head>';
 echo '<body>';
-// if (empty($argv) || count($argv) < 2) {
-//     echo 'Usage: gcsr.php http://site.com' . PHP_EOL2;
-//     echo '       1º param: site url (no / at the end)' . PHP_EOL2;
-//     echo '       2º param: file with urls (optimal, default to urls.txt)' . PHP_EOL2;
-//     echo '       3º param: Google Cache URL (optimal, you can repeat site url again to direct from site)' . PHP_EOL2;
-//     die;
-// } else {
-//     if (!isset($argv[2])) {
-//         $argv[2] = 'urls.txt';
-//     }
-//     if (isset($argv[3])) {
-//         $gcsr->set('google_cache_use', false);
-//     }
-// }
-//echo gmdate("Y-m-d\TH:i:s\Z") . ": \033[31mERROR\033[37m" . ' saveFile: cannot save :' . $save_on . PHP_EOL2;
-// ./gcsr.php http://www.fititnt.org urls_test.txt
-//$gcsr->set('google_cache_use', false)->set('wait_min', 3)->set('wait_max', 5);
-//$gcsr->set('wait_min', 3)->set('wait_max', 5);
 $ignore = [];
 if (is_file('ignore.txt')) {
     echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO ignoring file ignore.txt' . PHP_EOL2;
@@ -763,12 +677,6 @@ if (is_file('gcsr_processed.txt')) {
     echo gmdate("Y-m-d\TH:i:s\Z") . ': INFO ignoring file gcsr_processed.txt' . PHP_EOL2;
     $ignore[] = 'gcsr_processed.txt';
 }
-if (count($ignore)) {
-    $gcsr->importParam('ignore', $ignore);
-}
+
 
 $gcsr->set('base_site', 'https://ubr.ua')->set('url_file', 'urls_test.txt')->execute();
-//$gcsr->set('base_site', $argv[1])->set('url_file', $argv[2])->execute();
-
-//$gcsr->importParam('ignore', ['ignore.txt']);
-//var_dump($gcsr->get('ignore'));
