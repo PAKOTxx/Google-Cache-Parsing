@@ -24,7 +24,7 @@ function gparse($host, $file)
                             $error = gmdate("Y-m-d\TH:i:s\Z") . 'error on file put contents';
                             error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
                         } else {
-                            $error = gmdate("Y-m-d\TH:i:s\Z") . $url . ' is done';
+                            $error = gmdate("Y-m-d\TH:i:s\Z") . '  --  ' . $GLOBALS['proxy_list_array'][$GLOBALS['proxy_list_index']] . '  --  ' . $url . ' is done';
                             error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/working.log');
                         }
                     }
