@@ -42,13 +42,13 @@ function generate_proxy_list()
         if ($input) {
             $GLOBALS['proxy_list_array'] = array_filter(array_map('trim', explode("\n", $input)));
             if (empty($GLOBALS['proxy_list_array'])) {
-                $error = gmdate("Y-m-d\TH:i:s\Z") . 'proxy_array empty';
+                $error = gmdate("Y-m-d\TH:i:s\Z") . ' proxy_array empty';
                 error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
                 die;
             }
         }
     } else {
-        $error = gmdate("Y-m-d\TH:i:s\Z") . 'no proxy file';
+        $error = gmdate("Y-m-d\TH:i:s\Z") . ' no proxy file';
         error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
         die;
     }
