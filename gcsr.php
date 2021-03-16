@@ -252,6 +252,7 @@ class GoogleCacheSiteRecover
         $reqs_per_hour = '---';
 
         $total = count($this->url_stack);
+        $total = 5;
         $ignored = 0;
 
         foreach ($this->url_stack as $url) {
