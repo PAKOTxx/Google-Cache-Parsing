@@ -29,7 +29,7 @@ function gparse($host, $file)
                         }
                     }
                 }
-                sleep(rand(10, 30)); //timeout
+                sleep(rand(10, 20)); //timeout
             }
         }
     }
