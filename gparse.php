@@ -89,11 +89,11 @@ function get_page_content($host, $url)
     $content = curl_exec($ch);
     $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if ($status_code == 302) {
-        $error = gmdate("Y-m-d\TH:i:s\Z") . 'need to change proxy';
+        $error = gmdate("Y-m-d\TH:i:s\Z") . ' need to change proxy';
         error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
         $GLOBALS['proxy_list_index']++;
         if ($GLOBALS['proxy_list_index'] == count($GLOBALS['proxy_list_array'])) {
-            $error = gmdate("Y-m-d\TH:i:s\Z") . 'all proxy banned for today';
+            $error = gmdate("Y-m-d\TH:i:s\Z") . ' all proxy banned for today';
             error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
             die;
         } else {
