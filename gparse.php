@@ -1,24 +1,37 @@
 <?php
+set_time_limit(0);
 $GLOBALS['urls_array'];
 $GLOBALS['proxy_list_array'];
 $GLOBALS['proxy_list_index'] = 0;
 $GLOBALS['proxy_list_file'] = 'proxy.txt';
-$GLOBALS['proxy_enabled'] = false;
+$GLOBALS['proxy_enabled'] = true;
 
 function gparse($host, $file)
 {
     generate_urls_array($file);
     foreach ($GLOBALS['urls_array'] as $url) {
-        $content = get_page_content($host, $url);
-        if ($content) {
-            $save_on = getSavePath($url);
-            if (prepareFilePath($save_on)) {
-                if (!file_put_contents($save_on, $content)) {
-                    echo 'error on file put contents';
+        if (substr($url, -1) == '/') {
+            $url = substr($url, 0, -1);
+        }
+        if (preg_match('/(.*)-3[0-9]+$/Uis', $url)) {
+            $art_id = substr($url, -7);
+            if ($art_id > 3877812) {
+                $content = get_page_content($host, $url);
+                if ($content) {
+                    $save_on = getSavePath($url);
+                    if (prepareFilePath($save_on)) {
+                        if (!file_put_contents($save_on, $content)) {
+                            $error = gmdate("Y-m-d\TH:i:s\Z") . 'error on file put contents';
+                            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
+                        } else {
+                            $error = gmdate("Y-m-d\TH:i:s\Z") . $url . ' is done';
+                            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/working.log');
+                        }
+                    }
                 }
+                sleep(rand(10, 30)); //timeout
             }
         }
-        sleep(rand(10, 40)); //timeout
     }
 }
 
@@ -29,12 +42,14 @@ function generate_proxy_list()
         if ($input) {
             $GLOBALS['proxy_list_array'] = array_filter(array_map('trim', explode("\n", $input)));
             if (empty($GLOBALS['proxy_list_array'])) {
-                echo 'proxy_array empty';
+                $error = gmdate("Y-m-d\TH:i:s\Z") . 'proxy_array empty';
+                error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
                 die;
             }
         }
     } else {
-        echo 'no proxy file';
+        $error = gmdate("Y-m-d\TH:i:s\Z") . 'no proxy file';
+        error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
         die;
     }
 }
@@ -46,12 +61,14 @@ function generate_urls_array($file)
         if ($input) {
             $GLOBALS['urls_array'] = array_filter(array_map('trim', explode("\n", $input)));
             if (empty($GLOBALS['urls_array'])) {
-                echo 'urls_array empty';
+                $error = gmdate("Y-m-d\TH:i:s\Z") . 'urls array empty';
+                error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
                 die;
             }
         }
     } else {
-        echo 'no urls file';
+        $error = gmdate("Y-m-d\TH:i:s\Z") . 'no urls file';
+        error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
         die;
     }
 }
@@ -72,16 +89,19 @@ function get_page_content($host, $url)
     $content = curl_exec($ch);
     $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if ($status_code == 302) {
-        echo 'need to change proxy';
+        $error = gmdate("Y-m-d\TH:i:s\Z") . 'need to change proxy';
+        error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
         $GLOBALS['proxy_list_index']++;
         if ($GLOBALS['proxy_list_index'] == count($GLOBALS['proxy_list_array'])) {
-            echo 'all proxy banned for today';
+            $error = gmdate("Y-m-d\TH:i:s\Z") . 'all proxy banned for today';
+            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
             die;
         } else {
             get_page_content($host, $url);
         }
     } else if ($status_code == 404) {
-        echo 'no such article in cache';
+        $error = gmdate("Y-m-d\TH:i:s\Z") . $fullurl . ' no such article in cache';
+        error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
     } else {
         return $content;
     }
@@ -140,7 +160,8 @@ function prepareFilePath($file_path)
     $dir = dirname($file_path);
     if (!is_dir($dir)) {
         if (!mkdir($dir, 0755, true)) {
-            echo 'cannot create folder / file';
+            $error = gmdate("Y-m-d\TH:i:s\Z") . 'cannot create folder / file';
+            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
             return false;
         }
     }
