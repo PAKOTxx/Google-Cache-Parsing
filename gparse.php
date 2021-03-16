@@ -16,20 +16,22 @@ function gparse($host, $file)
         if (preg_match('/(.*)-3[0-9]+$/Uis', $url)) {
             $art_id = substr($url, -7);
             if ($art_id > 3877812) {
-                $content = get_page_content($host, $url);
-                if ($content) {
-                    $save_on = getSavePath($url);
-                    if (prepareFilePath($save_on)) {
-                        if (!file_put_contents($save_on, $content)) {
-                            $error = gmdate("Y-m-d\TH:i:s\Z") . ' error on file put contents';
-                            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
-                        } else {
-                            $error = gmdate("Y-m-d\TH:i:s\Z") . '  --  ' . $GLOBALS['proxy_list_array'][$GLOBALS['proxy_list_index']] . '  --  ' . $url . ' is done';
-                            error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/working.log');
+                $save_on = getSavePath($url);
+                if (!is_file($save_on)) {
+                    $content = get_page_content($host, $url);
+                    if ($content) {
+                        if (prepareFilePath($save_on)) {
+                            if (!file_put_contents($save_on, $content)) {
+                                $error = gmdate("Y-m-d\TH:i:s\Z") . ' error on file put contents';
+                                error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors.log');
+                            } else {
+                                $error = gmdate("Y-m-d\TH:i:s\Z") . '  --  ' . $GLOBALS['proxy_list_array'][$GLOBALS['proxy_list_index']] . '  --  ' . $url . ' is done';
+                                error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/working.log');
+                            }
                         }
                     }
+                    sleep(rand(5, 10)); //timeout
                 }
-                sleep(rand(5, 10)); //timeout
             }
         }
     }
