@@ -2,22 +2,22 @@
 set_time_limit(0);
 error_reporting(1);
 
-// $mysqli = new mysqli('192.168.50.16', 'root', '@Dven2re', 'ubr_2016', 3306);
-// if ($mysqli->connect_error) {
-//     die('Ошибка подключения (' . $mysqli->connect_errno . ') '
-//         . $mysqli->connect_error);
-// } else {
-//     echo "connected";
-//     if ($result = $mysqli->query("SELECT * FROM articles ORDER BY absnum DESC LIMIT 10")) {
-//         while ($row = $result->fetch_row()) {
-//             printf("%s (%s)\n", $row[0], $row[1]);
-//         }
-//         $result->close();
-//     }
-// }
+$mysqli = new mysqli('192.168.50.16', 'root', '@Dven2re', 'ubr_2016', 3306);
+if ($mysqli->connect_error) {
+    die('Ошибка подключения (' . $mysqli->connect_errno . ') '
+        . $mysqli->connect_error);
+} else {
+    echo "connected";
+    // if ($result = $mysqli->query("SELECT * FROM articles ORDER BY absnum DESC LIMIT 10")) {
+    //     while ($row = $result->fetch_row()) {
+    //         printf("%s (%s)\n", $row[0], $row[1]);
+    //     }
+    //     $result->close();
+    // }
+}
 
 
-$array_of_files_in_folder = getDirContents(getcwd() . '/output');
+$array_of_files_in_folder = getDirContents(getcwd() . '/output_test');
 $array_of_files_in_folder = delete_non_html_files($array_of_files_in_folder);
 //echo '<pre>', var_dump($array_of_files_in_folder), '</pre>';
 foreach ($array_of_files_in_folder as $file) {
@@ -167,9 +167,12 @@ foreach ($array_of_files_in_folder as $file) {
 
     $article_path_without_html = str_replace('.html', '', $file);
     $article_id = substr($article_path_without_html, -7);
+    $temp_string_for_replace = substr($article_path_without_html, -8);
 
     preg_match_all('/(.*)\\\(.*)\\\(.*).html/', $file, $article_category_array);
     $article_category = $article_category_array[2][0];
+    $article_slug = $article_category_array[3][0];
+    $article_slug = str_replace($temp_string_for_replace, '', $article_slug);
 
     $article_date_converted = strtotime($article_date);
     if (!$article_date_converted) {
@@ -200,10 +203,12 @@ foreach ($array_of_files_in_folder as $file) {
 
     // echo $file;
     // echo '<br>';
-    // echo $article_id;
-    // echo '<br>';
-    // echo $article_category;
-    // echo '<br>';
+    echo $article_id;
+    echo '<br>';
+    echo $article_slug;
+    echo '<br>';
+    echo $article_category;
+    echo '<br>';
     // echo $article_body;
     // echo '<br>';
     // echo $article_seo_descr;
@@ -220,13 +225,13 @@ foreach ($array_of_files_in_folder as $file) {
     // echo '<br>';
     // var_dump($article_authors); //массив авторов статьи, если он не один то 0, 1, 2 и т.д.
     // echo '<br>';
-    // var_dump($article_tags);
+    // var_dump($article_tags); //массив
     // echo '<br>';
-    // var_dump($article_tags_slugs);
+    // var_dump($article_tags_slugs); //массив
     // echo '<br>';
-    // var_dump($article_sources);
+    // var_dump($article_sources); //массив
     // echo '<br>';
-    // var_dump($article_sources_hrefs);
+    // var_dump($article_sources_hrefs); //массив
 
     if (!$article_id) {
         error_log_1($file, '$article_id');
@@ -242,6 +247,8 @@ foreach ($array_of_files_in_folder as $file) {
         error_log_1($file, '$article_h1');
     } else if (!$article_body) {
         error_log_1($file, '$article_body');
+    } else if (!$article_slug) {
+        error_log_1($file, '$article_slug');
     }
     // if (!$article_header) {
     //     error_log_1($file, '$article_header');
@@ -260,6 +267,25 @@ foreach ($array_of_files_in_folder as $file) {
     // $nodeList = $xpath->query("//a[@class='tag-info']");
     // $node = $nodeList->item(0);
     // echo "<p>" . $node->nodeValue . "</p>";
+    if ($mysqli->connect_error) {
+        die('Ошибка подключения (' . $mysqli->connect_errno . ') '
+            . $mysqli->connect_error);
+    } else {
+        if ($result = $mysqli->query("SELECT absnum FROM pages WHERE alias=" . $article_category . " AND type=96")) {
+            while ($row = $result->fetch_row()) {
+                var_dump($row);
+            }
+        } else {
+            error_log_1($file, 'CANT SELECT CATEGORY ID ');
+        }
+        // $sql = "INSERT INTO articles (absnum, alias, title, header, meta_title, meta_description, body, category, adate, created, changed) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        // $query = $mysqli->prepare($sql);
+        // $query->bind_param("sssssssssss", $article_id, $article_slug, $article_h1, $article_seo_title, $article_seo_descr, $article_body,);
+        // $query->execute();
+
+
+        //break;
+    }
 }
 
 //echo '<pre>', print_r($authors), '</pre>';
