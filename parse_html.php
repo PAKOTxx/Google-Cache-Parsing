@@ -2,7 +2,7 @@
 set_time_limit(0);
 error_reporting(1);
 
-$mysqli = new mysqli('192.168.50.16', 'root', '@Dven2re', 'ubr_2016', 3306);
+$mysqli = new mysqli('135.125.109.162', 'ubr', '9hYoGPyB', 'ubr_2016', 3306);
 if ($mysqli->connect_error) {
     die('Ошибка подключения (' . $mysqli->connect_errno . ') '
         . $mysqli->connect_error);
@@ -33,6 +33,10 @@ foreach ($array_of_files_in_folder as $file) {
     $article_sources_hrefs = array();
     $article_date_converted = '';
     $article_body = '';
+    $article_category = '';
+    $article_category_id = '';
+    $author_data_authors = array();
+    $authors_ids_to_insert = array();
     echo '<br>----<br>';
     $doc = new DOMDocument();
     $doc->loadHTMLFile($file);
@@ -205,8 +209,8 @@ foreach ($array_of_files_in_folder as $file) {
     // echo '<br>';
     echo $article_id;
     echo '<br>';
-    echo $article_slug;
-    echo '<br>';
+    // echo $article_slug;
+    // echo '<br>';
     echo $article_category;
     echo '<br>';
     // echo $article_body;
@@ -271,20 +275,58 @@ foreach ($array_of_files_in_folder as $file) {
         die('Ошибка подключения (' . $mysqli->connect_errno . ') '
             . $mysqli->connect_error);
     } else {
-        if ($result = $mysqli->query("SELECT absnum FROM pages WHERE alias=" . $article_category . " AND type=96")) {
+        $article_slug = $mysqli->real_escape_string($article_slug);
+        $article_body = $mysqli->real_escape_string($article_body);
+        $article_h1 = $mysqli->real_escape_string($article_h1);
+        $article_header = $mysqli->real_escape_string($article_header);
+        $article_seo_descr = $mysqli->real_escape_string($article_seo_descr);
+        $article_seo_title = $mysqli->real_escape_string($article_seo_title);
+
+        if ($result = $mysqli->query("SELECT absnum FROM pages WHERE alias='" . $article_category . "' AND (type=96 OR type=48)")) {
             while ($row = $result->fetch_row()) {
-                var_dump($row);
+                $article_category_id = $row[0];
+            }
+
+            if (!$article_authors) {
+                $author_main = 2231;
+            } else {
+                $author_data[0] = explode(" ", $article_authors[0]);
+                $sql = "SELECT absnum FROM users WHERE firstname LIKE '{$author_data[0][0]}' AND lastname LIKE '{$author_data[0][1]}'";
+                if ($result = $mysqli->query($sql)) {
+                    while ($row = $result->fetch_row()) {
+                        $author_main = $row[0];
+                    }
+                } else {
+                    $author_main = 2231;
+                }
+            }
+            $sql = "INSERT INTO articles (absnum, alias, title, header, meta_title, meta_description, body, category, adate, created, changed, authors, sources,help_absnum, approved, langid, userid, user_changed, type) VALUES ('{$article_id}','{$article_slug}','{$article_h1}','{$article_header}','{$article_seo_title}','{$article_seo_descr}','{$article_body}','{$article_category_id}','{$article_date_converted}','{$article_date_converted}','{$article_date_converted}', '', '', 0, 1, 1,'{$author_main}','{$author_main}', 4)";
+            if ($result = $mysqli->query($sql)) {
+                if ($article_authors) {
+                    foreach ($article_authors as $author_fio) {
+                        $author_data_authors[] = explode(" ", $author_fio);
+                    }
+                    foreach ($author_data_authors as $authorr) {
+                        $sql = "SELECT absnum FROM users WHERE firstname LIKE '{$authorr[0]}' AND lastname LIKE '{$authorr[1]}'";
+                        if ($result = $mysqli->query($sql)) {
+                            $row = $result->fetch_row();
+                            $authors_ids_to_insert[] = $row[0];
+                        }
+                    }
+                    foreach ($authors_ids_to_insert as $index => $id) {
+                        $sql = "INSERT INTO articles_authors (article, absnum, position) VALUES ({$article_id}, {$id}, {$index})";
+                        $mysqli->query($sql);
+                    }
+                }
+                done_log($article_id);
+            } else {
+                error_log_1($file, 'SQL INSERT N1 NOT WORKING ' . $mysqli->error . ' ');
+                echo $mysqli->error;
             }
         } else {
             error_log_1($file, 'CANT SELECT CATEGORY ID ');
         }
-        // $sql = "INSERT INTO articles (absnum, alias, title, header, meta_title, meta_description, body, category, adate, created, changed) VALUES (?,?,?,?,?,?,?,?,?,?)";
-        // $query = $mysqli->prepare($sql);
-        // $query->bind_param("sssssssssss", $article_id, $article_slug, $article_h1, $article_seo_title, $article_seo_descr, $article_body,);
-        // $query->execute();
-
-
-        //break;
+        break;
     }
 }
 
@@ -295,6 +337,11 @@ function error_log_1($file, $item)
 {
     $error = gmdate("Y-m-d\TH:i:s\Z") . ' ' . $file . '  ' . $item . ' is NULL';
     error_log(print_r($error, true) . PHP_EOL, 3, getcwd() . '/errors_arts.log');
+}
+
+function done_log($id)
+{
+    error_log(print_r($id, true) . PHP_EOL, 3, getcwd() . '/done_arts.log');
 }
 
 
