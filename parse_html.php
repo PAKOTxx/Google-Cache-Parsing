@@ -318,6 +318,12 @@ foreach ($array_of_files_in_folder as $file) {
                         $mysqli->query($sql);
                     }
                 }
+                if ($article_sources) {
+                    //какой-то код
+                }
+                if ($article_tags) {
+                    //еще какой-то код
+                }
                 done_log($article_id);
             } else {
                 error_log_1($file, 'SQL INSERT N1 NOT WORKING ' . $mysqli->error . ' ');
