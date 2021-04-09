@@ -37,6 +37,8 @@ foreach ($array_of_files_in_folder as $file) {
     $article_category_id = '';
     $author_data_authors = array();
     $authors_ids_to_insert = array();
+    $sources_ids_to_insert = array();
+    $tags_ids_to_insert = array();
     echo '<br>----<br>';
     $doc = new DOMDocument();
     $doc->loadHTMLFile($file);
@@ -319,10 +321,38 @@ foreach ($array_of_files_in_folder as $file) {
                     }
                 }
                 if ($article_sources) {
-                    //какой-то код
+                    foreach ($article_sources as $index => $value) {
+                        $name = $value;
+                        //$url = $article_sources_hrefs[$index];
+                        // var_dump($name);
+                        // var_dump($url);
+                        //$sql = "SELECT absnum FROM sources WHERE name LIKE '{$name}' AND mainurl LIKE '{$url}'";
+                        $sql = "SELECT absnum FROM sources WHERE name LIKE '{$name}'";
+                        if ($result = $mysqli->query($sql)) {
+                            $row = $result->fetch_row();
+                            $sources_ids_to_insert[] = $row[0];
+                        }
+                    }
+                    foreach ($sources_ids_to_insert as $index => $id) {
+                        $sql = "INSERT INTO articles_sources (article, absnum, position) VALUES ({$article_id}, {$id}, {$index})";
+                        $mysqli->query($sql);
+                    }
                 }
                 if ($article_tags) {
-                    //еще какой-то код
+                    foreach ($article_tags as $index => $value) {
+                        $name = $value;
+                        //$slug = $article_tags_slugs[$index];
+                        //$sql = "SELECT absnum FROM tags WHERE tag LIKE '{$name}' AND alias LIKE '{$slug}'";
+                        $sql = "SELECT absnum FROM tags WHERE tag LIKE '{$name}'";
+                        if ($result = $mysqli->query($sql)) {
+                            $row = $result->fetch_row();
+                            $tags_ids_to_insert[] = $row[0];
+                        }
+                    }
+                    foreach ($tags_ids_to_insert as $index => $id) {
+                        $sql = "INSERT INTO articles_tags (article, absnum, position) VALUES ({$article_id}, {$id}, {$index})";
+                        $mysqli->query($sql);
+                    }
                 }
                 done_log($article_id);
             } else {
