@@ -17,7 +17,7 @@ if ($mysqli->connect_error) {
 }
 
 
-$array_of_files_in_folder = getDirContents(getcwd() . '/output_test');
+$array_of_files_in_folder = getDirContents(getcwd() . '/output');
 $array_of_files_in_folder = delete_non_html_files($array_of_files_in_folder);
 //echo '<pre>', var_dump($array_of_files_in_folder), '</pre>';
 foreach ($array_of_files_in_folder as $file) {
@@ -362,7 +362,7 @@ foreach ($array_of_files_in_folder as $file) {
         } else {
             error_log_1($file, 'CANT SELECT CATEGORY ID ');
         }
-        break;
+        //break;
     }
 }
 
