@@ -2,7 +2,8 @@
 set_time_limit(0);
 error_reporting(1);
 
-$mysqli = new mysqli('135.125.109.162', 'ubr', '9hYoGPyB', 'ubr_2016', 3306);
+//$mysqli = new mysqli('135.125.109.162', 'ubr', '9hYoGPyB', 'ubr_2016', 3306);
+$mysqli = new mysqli('165.22.202.28', 'ubr', '9hYoGPyB', 'ubr_2016', 3306);
 if ($mysqli->connect_error) {
     die('Ошибка подключения (' . $mysqli->connect_errno . ') '
         . $mysqli->connect_error);
