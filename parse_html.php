@@ -173,6 +173,7 @@ foreach ($array_of_files_in_folder as $file) {
     }
 
     $article_path_without_html = str_replace('.html', '', $file);
+    $article_path_without_html = str_replace(' (2)', '', $article_path_without_html);
     $article_id = substr($article_path_without_html, -7);
     $temp_string_for_replace = substr($article_path_without_html, -8);
 
