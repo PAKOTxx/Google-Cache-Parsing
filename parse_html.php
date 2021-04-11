@@ -356,8 +356,12 @@ foreach ($array_of_files_in_folder as $file) {
                         $mysqli->query($sql);
                     }
                 }
+                $sql = "INSERT INTO articles_pages (article, absnum, position, adate) VALUES ({$article_id}, {$article_category_id}, 0, '{$article_date_converted}')";
+                $mysqli->query($sql);
                 done_log($article_id);
             } else {
+                $sql = "INSERT INTO articles_pages (article, absnum, position, adate) VALUES ({$article_id}, {$article_category_id}, 0, '{$article_date_converted}')";
+                $mysqli->query($sql);
                 error_log_1($file, 'SQL INSERT N1 NOT WORKING ' . $mysqli->error . ' ');
                 echo $mysqli->error;
             }
